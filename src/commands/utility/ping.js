@@ -5,6 +5,6 @@ module.exports = {
 	async execute(interaction) {
 		const sent = await interaction.reply({ content: 'Calculating ping...', fetchReply: true });
 		const pingTime = sent.createdTimestamp - interaction.createdTimestamp;
-		await interaction.editReply(`Pong! 🏓\nCyber Dog\'s latency: ${pingTime}ms'`);
+		await interaction.editReply(`Pong! 🏓\nCyber Dog\'s latency: ${pingTime}ms`);
 	}
 }
