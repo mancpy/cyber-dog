@@ -2,6 +2,6 @@ module.exports = {
 	name: 'ready',
 	once: true,
 	execute(client) {
-		console.log(`Online como: ${client.user.tag}`);
+		console.log(`Online as: ${client.user.tag}`);
 	}
 };
