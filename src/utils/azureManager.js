@@ -1,6 +1,6 @@
 const { ComputeManagementClient } = require('@azure/arm-compute');
-const { DefaultAzureCredential } = require('@azure/identity');
 const { NetworkManagementClient } = require('@azure/arm-network');
+const { AzureCliCredential } = require('@azure/identity');
 const net = require('net');
 
 const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
@@ -8,15 +8,16 @@ const resourceGroupName = process.env.AZURE_RESOURCE_GROUP;
 const vmName = process.env.AZURE_VM_NAME;
 const publicIPName = process.env.AZURE_PUBLIC_IP;
 const minecraftPath = process.env.MINECRAFT_PATH;
+const minecraftStartScript = process.env.MINECRAFT_START_SCRIPT;
+const credentials = new AzureCliCredential();
 
-const credentials = new DefaultAzureCredential();
 const computeClient = new ComputeManagementClient(credentials, subscriptionId);
 const networkClient = new NetworkManagementClient(credentials, subscriptionId);
 
 let shutdownTimer = null;
 let shutdownTime = null;
 
-async function checkMinecraftServerStatus(ip, port = 25565, timeout = 5000) {
+async function checkMinecraftServerStatus(ip, port = 25565, timeout = 15000) {
 	return new Promise(resolve => {
 		const socket = new net.Socket();
 
@@ -73,8 +74,16 @@ async function runCommandOnVM(command) {
 async function startMinecraftServer() {
 	console.log('Starting Minecraft server...');
 
-	const command = `cd ${minecraftPath} && bash ./start.sh`;
-	return await runCommandOnVM(command);
+	const command = `cd ${minecraftPath} && sudo -u ${vmName} bash -c "./${minecraftStartScript}"`;
+	console.log(`Executing command: ${command}`);
+
+	const result = await runCommandOnVM(command);
+
+	const checkCommand = `sudo -u ${vmName} screen -ls`;
+	const checkResult = await runCommandOnVM(checkCommand);
+	console.log('Result:', checkResult.output);
+
+	return result;
 }
 
 async function stopMinecraftServer() {
@@ -161,8 +170,8 @@ async function startVMServer() {
 		console.log('Checking Minecraft server status...');
 		let isMinecraftRunning = false;
 		let checkAttempts = 0;
-		while (!isMinecraftRunning && checkAttempts < 12) {
-			await new Promise(resolve => setTimeout(resolve, 5000));
+		while (!isMinecraftRunning && checkAttempts < 24) {
+			await new Promise(resolve => setTimeout(resolve, 15000));
 			isMinecraftRunning = await checkMinecraftServerStatus(publicIP);
 			checkAttempts++;
 			console.log(`Attempt ${checkAttempts}: Minecraft running = ${isMinecraftRunning}`);
