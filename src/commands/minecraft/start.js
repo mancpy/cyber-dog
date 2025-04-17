@@ -1,3 +1,4 @@
+const constants = require('../../config/constants');
 const { SlashCommandBuilder } = require('discord.js');
 const { startVMServer, scheduleShutdown } = require('../../utils/azureManager');
 
@@ -22,16 +23,15 @@ module.exports = {
 			const result = await startVMServer();
 
 			if (result.success) {
-				// Schedule automatic shutdown
 				scheduleShutdown(duration);
 
-				await interaction.editReply(`✅ Minecraft server started successfully! Address: ${result.serverIp}\nThe server will shut down automatically in ${duration} hour(s).`);
+				await interaction.editReply(`${constants.EMOJIS.SUCCESS} Minecraft server started successfully! Address: ${result.serverIp}\nThe server will shut down automatically in ${duration} hour(s).`);
 			} else {
-				await interaction.editReply(`❌ Error starting server: ${result.error}`);
+				await interaction.editReply(`${constants.EMOJIS.ERROR} Error starting server: ${result.error}`);
 			}
 		} catch (error) {
 			console.error('Error starting server:', error);
-			await interaction.editReply('❌ An error occurred while trying to start the Minecraft server.');
+			await interaction.editReply(`${constants.EMOJIS.ERROR} An error occurred while trying to start the Minecraft server.`);
 		}
 	},
 };

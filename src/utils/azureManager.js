@@ -1,23 +1,28 @@
+const constants = require('../config/constants');
+const azureConfig = require('../config/azure');
+const minecraftConfig = require('../config/minecraft');
+const discordConfig = require('../config/discord');
 const { ComputeManagementClient } = require('@azure/arm-compute');
 const { NetworkManagementClient } = require('@azure/arm-network');
 const { AzureCliCredential } = require('@azure/identity');
 const net = require('net');
 
 const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
-const resourceGroupName = process.env.AZURE_RESOURCE_GROUP;
-const vmName = process.env.AZURE_VM_NAME;
-const publicIPName = process.env.AZURE_PUBLIC_IP;
-const minecraftPath = process.env.MINECRAFT_PATH;
-const minecraftStartScript = process.env.MINECRAFT_START_SCRIPT;
-const credentials = new AzureCliCredential();
+const resourceGroupName = azureConfig.resourceGroupName;
+const vmName = azureConfig.vmName;
+const publicIPName = azureConfig.publicIPName;
+const minecraftPath = minecraftConfig.path;
+const minecraftStartScript = minecraftConfig.startScript;
+const minecraftServerPort = minecraftConfig.serverPort;
 
+const credentials = new AzureCliCredential();
 const computeClient = new ComputeManagementClient(credentials, subscriptionId);
 const networkClient = new NetworkManagementClient(credentials, subscriptionId);
 
 let shutdownTimer = null;
 let shutdownTime = null;
 
-async function checkMinecraftServerStatus(ip, port = 25565, timeout = 15000) {
+async function checkMinecraftServerStatus(ip, port = minecraftServerPort, timeout = 15000) {
 	return new Promise(resolve => {
 		const socket = new net.Socket();
 
@@ -74,7 +79,7 @@ async function runCommandOnVM(command) {
 async function startMinecraftServer() {
 	console.log('Starting Minecraft server...');
 
-	const command = `cd ${minecraftPath} && sudo -u ${vmName} bash -c "./${minecraftStartScript}"`;
+	const command = `cd ${minecraftPath} && sudo -u ${vmName} bash "./${minecraftStartScript}"`;
 	console.log(`Executing command: ${command}`);
 
 	const result = await runCommandOnVM(command);
@@ -170,7 +175,7 @@ async function startVMServer() {
 		console.log('Checking Minecraft server status...');
 		let isMinecraftRunning = false;
 		let checkAttempts = 0;
-		while (!isMinecraftRunning && checkAttempts < 24) {
+		while (!isMinecraftRunning && checkAttempts < 12) {
 			await new Promise(resolve => setTimeout(resolve, 15000));
 			isMinecraftRunning = await checkMinecraftServerStatus(publicIP);
 			checkAttempts++;
@@ -180,7 +185,7 @@ async function startVMServer() {
 		if (!isMinecraftRunning) {
 			return {
 				success: false,
-				error: "VM started, but Minecraft server did not respond after 1 minute"
+				error: "VM started, but Minecraft server did not respond after 3 minutes"
 			};
 		}
 

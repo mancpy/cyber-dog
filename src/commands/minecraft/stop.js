@@ -1,3 +1,4 @@
+const constants = require('../../config/constants');
 const { SlashCommandBuilder } = require('discord.js');
 const { stopVMServer, cancelShutdown } = require('../../utils/azureManager');
 
@@ -14,16 +15,15 @@ module.exports = {
 			const result = await stopVMServer();
 
 			if (result.success) {
-				// Cancel any scheduled shutdown
 				cancelShutdown();
 
-				await interaction.editReply('✅ Minecraft server stopped successfully!');
+				await interaction.editReply(`${constants.EMOJIS.SUCCESS} Minecraft server stopped successfully!`);
 			} else {
-				await interaction.editReply(`❌ Error stopping server: ${result.error}`);
+				await interaction.editReply(`${constants.EMOJIS.ERROR} Error stopping server: ${result.error}`);
 			}
 		} catch (error) {
 			console.error('Error stopping server:', error);
-			await interaction.editReply('❌ An error occurred while trying to stop the Minecraft server.');
+			await interaction.editReply(`${constants.EMOJIS.ERROR} An error occurred while trying to stop the Minecraft server.`);
 		}
 	},
 };
